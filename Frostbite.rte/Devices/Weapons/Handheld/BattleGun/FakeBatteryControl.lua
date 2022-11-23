@@ -24,7 +24,6 @@ function Update(self)
 		if self:NumberValueExists("BatteryRemoved") then
 			self.fakeBattery.Frame = 0;
 		else
-			print("yes")
 			self.fakeBattery.Frame = 1;
 		end
 		-- if self:NumberValueExists("MagRotation") then

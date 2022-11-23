@@ -6,6 +6,7 @@ function Create(self)
 	
 	self.preSound = CreateSoundContainer("Charge Electradyne BattleGun", "Frostbite.rte");
 	self.reflectionOutdoorsSound = CreateSoundContainer("ReflectionOutdoors Electradyne BattleGun", "Frostbite.rte");
+	self.reflectionIndoorsSound = CreateSoundContainer("ReflectionIndoors Electradyne BattleGun", "Frostbite.rte");
 	
 	self.reloadPrepareSounds = {}
 	self.reloadPrepareSounds.BoltBack = CreateSoundContainer("BoltBackPrepare Electradyne BattleGun", "Frostbite.rte");
@@ -86,10 +87,10 @@ function Create(self)
 	-- Progressive Recoil System 
 	self.recoilAcc = 0 -- for sinous
 	self.recoilStr = 0 -- for accumulator
-	self.recoilStrength = 25 -- multiplier for base recoil added to the self.recoilStr when firing
+	self.recoilStrength = 35 -- multiplier for base recoil added to the self.recoilStr when firing
 	self.recoilPowStrength = 0.2 -- multiplier for self.recoilStr when firing
 	self.recoilRandomUpper = 1.1 -- upper end of random multiplier (1 is lower)
-	self.recoilDamping = 0.8
+	self.recoilDamping = 0.6
 	
 	self.recoilMax = 10 -- in deg.
 	self.originalSharpLength = self.SharpLength
@@ -477,6 +478,9 @@ function Update(self)
 		
 		if outdoorRays >= self.rayThreshold then
 			self.reflectionOutdoorsSound:Play(self.Pos);
+			print("out")
+		else
+			self.reflectionIndoorsSound:Play(self.Pos);
 		end
 	end
 	
