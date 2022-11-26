@@ -46,7 +46,7 @@ function Create(self)
 	self.reloadAfterDelay.MagIn = 500
 	self.reloadAfterDelay.BatteryOut = 500
 	self.reloadAfterDelay.BatteryIn = 800
-	self.reloadAfterDelay.BoltForward = 65
+	self.reloadAfterDelay.BoltForward = 350
 	
 	self.lastAge = self.Age
 	
@@ -57,7 +57,12 @@ function Create(self)
 	
 	self.rotation = 0
 	self.rotationTarget = 0
-	self.rotationSpeed = 9
+	self.rotationSpeed = 6
+	
+	self.reloadSupportOffsetTarget = Vector(0, 0);
+	self.reloadSupportOffsetSpeed = 20
+	
+	self.reloadingVector = Vector(0, 0)
 	
 	self.horizontalAnim = 0
 	self.verticalAnim = 0
@@ -144,6 +149,10 @@ function Update(self)
 	if self:IsReloading() then
 
 		if self.reloadPhase == 0 then
+			
+			self.reloadSupportOffsetSpeed = 20
+		
+			self.reloadSupportOffsetTarget = Vector(-7, 0)
 		
 			if not self.chamberOnReload then
 				self.reloadPhase = 1;
@@ -156,9 +165,14 @@ function Update(self)
 			self.prepareSoundLength = self.reloadPrepareLengths.BoltBack;
 			self.afterSound = self.reloadAfterSounds.BoltBack;
 			
-			self.rotationTarget = 5;
+			self.rotationTarget = 45;
 			
 		elseif self.reloadPhase == 1 then
+		
+		
+			self.reloadSupportOffsetSpeed = 16
+		
+			self.reloadSupportOffsetTarget = Vector(-10, 0)
 		
 			self.reloadDelay = self.reloadPrepareDelay.MagOut;
 			self.afterDelay = self.reloadAfterDelay.MagOut;		
@@ -167,9 +181,16 @@ function Update(self)
 			self.prepareSoundLength = self.reloadPrepareLengths.MagOut;
 			self.afterSound = self.reloadAfterSounds.MagOut;
 			
-			self.rotationTarget = 5;
+			self.reloadingVectorTarget = Vector(7, 0);
+			self.rotationTarget = 45;
 			
 		elseif self.reloadPhase == 2 then
+		
+			self.reloadingVector = Vector(5, 0);
+		
+			self.reloadSupportOffsetSpeed = 10
+		
+			self.reloadSupportOffsetTarget = Vector(-8, 9)
 		
 			self.reloadDelay = self.reloadPrepareDelay.MagIn;
 			self.afterDelay = self.reloadAfterDelay.MagIn;		
@@ -178,9 +199,14 @@ function Update(self)
 			self.prepareSoundLength = self.reloadPrepareLengths.MagIn;
 			self.afterSound = self.reloadAfterSounds.MagIn;
 			
-			self.rotationTarget = 0;
+			self.reloadingVectorTarget = Vector(8, 0);
+			self.rotationTarget = 70;
 	
 		elseif self.reloadPhase == 3 then
+		
+			self.reloadSupportOffsetSpeed = 5
+		
+			self.reloadSupportOffsetTarget = Vector(7, 5)
 		
 			self.reloadDelay = self.reloadPrepareDelay.BatteryOut;
 			self.afterDelay = self.reloadAfterDelay.BatteryOut;		
@@ -189,9 +215,12 @@ function Update(self)
 			self.prepareSoundLength = self.reloadPrepareLengths.BatteryOut;
 			self.afterSound = self.reloadAfterSounds.BatteryOut;
 			
-			self.rotationTarget = 5;
+			self.reloadingVectorTarget = Vector(7, 0);
+			self.rotationTarget = 15;
 			
 		elseif self.reloadPhase == 4 then
+		
+			self.reloadSupportOffsetTarget = Vector(6, 8)
 		
 			self.reloadDelay = self.reloadPrepareDelay.BatteryIn;
 			self.afterDelay = self.reloadAfterDelay.BatteryIn;		
@@ -200,9 +229,13 @@ function Update(self)
 			self.prepareSoundLength = self.reloadPrepareLengths.BatteryIn;
 			self.afterSound = self.reloadAfterSounds.BatteryIn;
 			
-			self.rotationTarget = 0;
+			self.reloadingVectorTarget = Vector(0, 0);
+			self.rotationTarget = 15;
 		
 		elseif self.reloadPhase == 5 then
+		
+			self.reloadSupportOffsetTarget = Vector(-7, 2)
+		
 			self.Frame = 3;
 			
 			self.reloadDelay = self.reloadPrepareDelay.BoltForward;
@@ -236,13 +269,40 @@ function Update(self)
 				end		
 				
 			elseif self.reloadPhase == 1 then
+			
+				self.reloadSupportOffsetSpeed = 20
+				
+				self.reloadSupportOffsetTarget = Vector(-2, 7)
+			
 				self:SetNumberValue("MagRemoved", 1);
 			elseif self.reloadPhase == 2 then
+			
+				self.reloadSupportOffsetSpeed = 20
+			
+				self.reloadSupportOffsetTarget = Vector(-7, 3)
+			
 				self:RemoveNumberValue("MagRemoved");
 				
 			elseif self.reloadPhase == 3 then
+				
+				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.5)) then
+					self.reloadSupportOffsetSpeed = 2
+					self.reloadSupportOffsetTarget = Vector(-6, 8)
+
+				end		
+			
+			
 				self:SetNumberValue("BatteryRemoved", 1);
 			elseif self.reloadPhase == 4 then
+			
+				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.5)) then
+					self.reloadSupportOffsetTarget = Vector(4, 2)
+				else
+					self.reloadSupportOffsetSpeed = 15
+					self.reloadSupportOffsetTarget = Vector(7, 2)
+
+				end		
+				
 				self:RemoveNumberValue("BatteryRemoved");
 
 			elseif self.reloadPhase == 5 then
@@ -254,6 +314,8 @@ function Update(self)
 					self.Frame = 2;
 				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.6)) then
 					self.Frame = 3;
+					self.reloadSupportOffsetSpeed = 8
+					self.reloadSupportOffsetTarget = Vector(4, 2)
 				end
 			end
 			
@@ -305,8 +367,9 @@ function Update(self)
 					if self.chamberOnReload then
 						self.phaseOnStop = 5;
 					else
-						self.ReloadTime = 0; -- done! no after delay if non-chambering reload.
-						self.reloadPhase = 0;
+						--self.ReloadTime = 0; -- done! no after delay if non-chambering reload.
+						--self.reloadPhase = 0;
+						-- self.reloadingVectorTarget = nil;
 						self.phaseOnStop = nil;
 					end
 					self.angVel = self.angVel - 2;
@@ -336,6 +399,7 @@ function Update(self)
 				elseif self.reloadPhase == 4 or self.reloadPhase == 5 then
 					self.ReloadTime = 0;
 					self.reloadPhase = 0;
+					self.reloadingVectorTarget = nil;
 				else
 					self.reloadPhase = self.reloadPhase + 1;
 				end
@@ -523,6 +587,7 @@ function Update(self)
 		-- Progressive Recoil Update		
 		
 		self.rotation = (self.rotation + self.rotationTarget * TimerMan.DeltaTimeSecs * self.rotationSpeed) / (1 + TimerMan.DeltaTimeSecs * self.rotationSpeed)
+		self.ReloadSupportOffset = self.ReloadSupportOffset + ((self.reloadSupportOffsetTarget - self.ReloadSupportOffset) * TimerMan.DeltaTimeSecs * self.reloadSupportOffsetSpeed)
 		local total = math.rad(self.rotation) * self.FlipFactor
 		
 		self.InheritedRotAngleOffset = total * self.FlipFactor;
@@ -535,8 +600,16 @@ function Update(self)
 		-- self:SetNumberValue("MagOffsetX", offsetTotal.X);
 		-- self:SetNumberValue("MagOffsetY", offsetTotal.Y);
 		
-		self.StanceOffset = Vector(self.originalStanceOffset.X, self.originalStanceOffset.Y) + stance
-		self.SharpStanceOffset = Vector(self.originalSharpStanceOffset.X, self.originalSharpStanceOffset.Y) + stance
+		if self.reloadingVectorTarget then
+			self.reloadingVector = self.reloadingVector + ((self.reloadingVectorTarget - self.reloadingVector) * TimerMan.DeltaTimeSecs * 2.5)
+			self.StanceOffset = Vector(self.originalStanceOffset.X, self.originalStanceOffset.Y) + stance + self.reloadingVector
+			self.SharpStanceOffset = Vector(self.originalSharpStanceOffset.X, self.originalSharpStanceOffset.Y) + stance + self.reloadingVector
+		else
+			self.reloadingVector = Vector(0, 0)
+			self.StanceOffset = Vector(self.originalStanceOffset.X, self.originalStanceOffset.Y) + stance
+			self.SharpStanceOffset = Vector(self.originalSharpStanceOffset.X, self.originalSharpStanceOffset.Y) + stance
+		end
+		
 	end
 	
 	if self.canSmoke and not self.FireTimer:IsPastSimMS(2500) then
