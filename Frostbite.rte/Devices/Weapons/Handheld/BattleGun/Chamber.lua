@@ -57,7 +57,7 @@ function Create(self)
 	
 	self.rotation = 0
 	self.rotationTarget = 0
-	self.rotationSpeed = 6
+	self.rotationSpeed = 9
 	
 	self.reloadSupportOffsetTarget = Vector(0, 0);
 	self.reloadSupportOffsetSpeed = 20
@@ -147,6 +147,8 @@ function Update(self)
 	
 	-- PAWNIS RELOAD ANIMATION HERE
 	if self:IsReloading() then
+	
+		self.rotationSpeed = 4
 
 		if self.reloadPhase == 0 then
 			
@@ -220,7 +222,7 @@ function Update(self)
 			
 		elseif self.reloadPhase == 4 then
 		
-			self.reloadSupportOffsetTarget = Vector(6, 8)
+			self.reloadSupportOffsetTarget = Vector(4, 7)
 		
 			self.reloadDelay = self.reloadPrepareDelay.BatteryIn;
 			self.afterDelay = self.reloadAfterDelay.BatteryIn;		
@@ -234,7 +236,7 @@ function Update(self)
 		
 		elseif self.reloadPhase == 5 then
 		
-			self.reloadSupportOffsetTarget = Vector(-7, 2)
+			self.reloadSupportOffsetTarget = Vector(-3, 1)
 		
 			self.Frame = 3;
 			
@@ -272,7 +274,11 @@ function Update(self)
 			
 				self.reloadSupportOffsetSpeed = 20
 				
-				self.reloadSupportOffsetTarget = Vector(-2, 7)
+				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.5)) then
+					self.reloadSupportOffsetTarget = Vector(-7, 5)
+				else
+					self.reloadSupportOffsetTarget = Vector(-2, 7)
+				end
 			
 				self:SetNumberValue("MagRemoved", 1);
 			elseif self.reloadPhase == 2 then
@@ -286,7 +292,7 @@ function Update(self)
 			elseif self.reloadPhase == 3 then
 				
 				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.5)) then
-					self.reloadSupportOffsetSpeed = 2
+					self.reloadSupportOffsetSpeed = 6
 					self.reloadSupportOffsetTarget = Vector(-6, 8)
 
 				end		
@@ -312,10 +318,10 @@ function Update(self)
 					self.Frame = 1;
 				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.2)) then
 					self.Frame = 2;
+					self.reloadSupportOffsetSpeed = 16
+					self.reloadSupportOffsetTarget = Vector(4, 2)
 				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.6)) then
 					self.Frame = 3;
-					self.reloadSupportOffsetSpeed = 8
-					self.reloadSupportOffsetTarget = Vector(4, 2)
 				end
 			end
 			
@@ -367,9 +373,10 @@ function Update(self)
 					if self.chamberOnReload then
 						self.phaseOnStop = 5;
 					else
-						--self.ReloadTime = 0; -- done! no after delay if non-chambering reload.
-						--self.reloadPhase = 0;
-						-- self.reloadingVectorTarget = nil;
+						self.ReloadTime = 0; -- done! no after delay if non-chambering reload.
+						self.reloadPhase = 0;
+						self.reloadingVectorTarget = nil;
+						self.rotationSpeed = 9
 						self.phaseOnStop = nil;
 					end
 					self.angVel = self.angVel - 2;
@@ -400,6 +407,7 @@ function Update(self)
 					self.ReloadTime = 0;
 					self.reloadPhase = 0;
 					self.reloadingVectorTarget = nil;
+					self.rotationSpeed = 9
 				else
 					self.reloadPhase = self.reloadPhase + 1;
 				end
@@ -470,6 +478,7 @@ function Update(self)
 		if self.RoundInMagCount > 0 then
 		else
 			self.chamberOnReload = true;
+			self.reloadPhase = 0;
 		end
 	
 		self.horizontalAnim = 18
@@ -542,7 +551,6 @@ function Update(self)
 		
 		if outdoorRays >= self.rayThreshold then
 			self.reflectionOutdoorsSound:Play(self.Pos);
-			print("out")
 		else
 			self.reflectionIndoorsSound:Play(self.Pos);
 		end
