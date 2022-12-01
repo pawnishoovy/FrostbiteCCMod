@@ -319,7 +319,7 @@ function Update(self)
 		self.ReloadTime = 9999;
 		-- SLIDE animation when firing
 		-- don't ask, math magic
-		local f = math.max(1 - math.min((self.FireTimer.ElapsedSimTimeMS) / 200, 1), 0)
+		local f = math.max(1 - math.min((self.FireTimer.ElapsedSimTimeMS) / 90, 1), 0)
 		self.Frame = math.floor(f * 5 + 0.55);
 	end
 	
