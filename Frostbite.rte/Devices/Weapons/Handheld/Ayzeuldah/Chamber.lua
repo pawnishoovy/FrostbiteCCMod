@@ -4,49 +4,51 @@ function Create(self)
 	
 	-- Sounds --
 	
-	self.preSound = CreateSoundContainer("Charge Electradyne BattleGun", "Frostbite.rte");
-	self.reflectionOutdoorsSound = CreateSoundContainer("ReflectionOutdoors Electradyne BattleGun", "Frostbite.rte");
-	self.reflectionIndoorsSound = CreateSoundContainer("ReflectionIndoors Electradyne BattleGun", "Frostbite.rte");
+	self.addSound = CreateSoundContainer("Add Ayzeuldah", "Frostbite.rte");
+	self.preSound = CreateSoundContainer("Pre Ayzeuldah", "Frostbite.rte");
+	
+	self.addAutoSound = CreateSoundContainer("AddAuto Ayzeuldah", "Frostbite.rte");
+	self.mechAutoSound = CreateSoundContainer("MechAuto Ayzeuldah", "Frostbite.rte");
+	
+	self.activeAddSound = self.addSound
+	self.activeMechSound = self.mechSound
+	
+	self.mechLastSound = CreateSoundContainer("MechLast Ayzeuldah", "Frostbite.rte");
+	
+	self.noiseAutoOutdoorsSound = CreateSoundContainer("NoiseAutoOutdoors Ayzeuldah", "Frostbite.rte");
+	self.noiseAutoOutdoorsSound.Volume = 0.5
+	self.noiseAutoIndoorsSound = CreateSoundContainer("NoiseAutoIndoors Ayzeuldah", "Frostbite.rte");
+	self.noiseAutoIndoorsSound.Volume = 0.5
+	
+	self.reflectionOutdoorsSound = CreateSoundContainer("ReflectionOutdoors Ayzeuldah", "Frostbite.rte");
+	self.reflectionOutdoorsSound.Volume = 0.5
+	self.reflectionIndoorsSound = CreateSoundContainer("ReflectionIndoors Ayzeuldah", "Frostbite.rte");
+	self.reflectionIndoorsSound.Volume = 0.5
 	
 	self.reloadPrepareSounds = {}
-	self.reloadPrepareSounds.BoltBack = CreateSoundContainer("BoltBackPrepare Electradyne BattleGun", "Frostbite.rte");
-	self.reloadPrepareSounds.MagOut = nil
-	self.reloadPrepareSounds.MagIn = CreateSoundContainer("MagInPrepare Electradyne BattleGun", "Frostbite.rte");
-	self.reloadPrepareSounds.BatteryOut = CreateSoundContainer("BatteryOutPrepare Electradyne BattleGun", "Frostbite.rte");
-	self.reloadPrepareSounds.BatteryIn = CreateSoundContainer("BatteryInPrepare Electradyne BattleGun", "Frostbite.rte");
-	self.reloadPrepareSounds.BoltForward = CreateSoundContainer("BoltForwardPrepare Electradyne BattleGun", "Frostbite.rte");
+	self.reloadPrepareSounds.MagOut = CreateSoundContainer("MagOutPrepare Ayzeuldah", "Frostbite.rte");
+	self.reloadPrepareSounds.MagIn = CreateSoundContainer("MagInPrepare Ayzeuldah", "Frostbite.rte");
+	self.reloadPrepareSounds.BoltChamber = nil;
 	
 	self.reloadPrepareLengths = {}
-	self.reloadPrepareLengths.BoltBack = 575
-	self.reloadPrepareLengths.MagOut = 0
-	self.reloadPrepareLengths.MagIn = 430
-	self.reloadPrepareLengths.BatteryOut = 400
-	self.reloadPrepareLengths.BatteryIn = 950
-	self.reloadPrepareLengths.BoltForward = 640
+	self.reloadPrepareLengths.MagOut = 115
+	self.reloadPrepareLengths.MagIn = 150
+	self.reloadPrepareLengths.BoltChamber = 0
 	
 	self.reloadPrepareDelay = {}
-	self.reloadPrepareDelay.BoltBack = 650
 	self.reloadPrepareDelay.MagOut = 300
-	self.reloadPrepareDelay.MagIn = 1000
-	self.reloadPrepareDelay.BatteryOut = 550
-	self.reloadPrepareDelay.BatteryIn = 1000
-	self.reloadPrepareDelay.BoltForward = 500
+	self.reloadPrepareDelay.MagIn = 500
+	self.reloadPrepareDelay.BoltChamber = 100
 	
 	self.reloadAfterSounds = {}
-	self.reloadAfterSounds.BoltBack = CreateSoundContainer("BoltBack Electradyne BattleGun", "Frostbite.rte");
-	self.reloadAfterSounds.MagOut = CreateSoundContainer("MagOut Electradyne BattleGun", "Frostbite.rte");
-	self.reloadAfterSounds.MagIn = CreateSoundContainer("MagIn Electradyne BattleGun", "Frostbite.rte");
-	self.reloadAfterSounds.BatteryOut = CreateSoundContainer("BatteryOut Electradyne BattleGun", "Frostbite.rte");
-	self.reloadAfterSounds.BatteryIn = CreateSoundContainer("BatteryIn Electradyne BattleGun", "Frostbite.rte");
-	self.reloadAfterSounds.BoltForward = CreateSoundContainer("BoltForward Electradyne BattleGun", "Frostbite.rte");
+	self.reloadAfterSounds.MagOut = CreateSoundContainer("MagOut Ayzeuldah", "Frostbite.rte");
+	self.reloadAfterSounds.MagIn = CreateSoundContainer("MagIn Ayzeuldah", "Frostbite.rte");
+	self.reloadAfterSounds.BoltChamber = CreateSoundContainer("BoltChamber Ayzeuldah", "Frostbite.rte");
 	
 	self.reloadAfterDelay = {}
-	self.reloadAfterDelay.BoltBack = 167
-	self.reloadAfterDelay.MagOut = 550
-	self.reloadAfterDelay.MagIn = 500
-	self.reloadAfterDelay.BatteryOut = 500
-	self.reloadAfterDelay.BatteryIn = 800
-	self.reloadAfterDelay.BoltForward = 350
+	self.reloadAfterDelay.MagOut = 200
+	self.reloadAfterDelay.MagIn = 150
+	self.reloadAfterDelay.BoltChamber = 500
 	
 	self.lastAge = self.Age
 	
@@ -83,19 +85,19 @@ function Create(self)
 	self.fireDelayTimer = Timer();
 	self.delayedFire = false
 	self.delayedFireTimer = Timer();
-	self.delayedFireTimeMS = 400
+	self.delayedFireTimeMS = 30
 	self.delayedFireEnabled = true
 	self.activated = false
 	
 	-- Progressive Recoil System 
 	self.recoilAcc = 0 -- for sinous
 	self.recoilStr = 0 -- for accumulator
-	self.recoilStrength = 35 -- multiplier for base recoil added to the self.recoilStr when firing
+	self.recoilStrength = 15 -- multiplier for base recoil added to the self.recoilStr when firing
 	self.recoilPowStrength = 0.2 -- multiplier for self.recoilStr when firing
 	self.recoilRandomUpper = 1.1 -- upper end of random multiplier (1 is lower)
 	self.recoilDamping = 0.6
 	
-	self.recoilMax = 10 -- in deg.
+	self.recoilMax = 2 -- in deg.
 	self.originalSharpLength = self.SharpLength
 	-- Progressive Recoil System 
 end
@@ -147,27 +149,8 @@ function Update(self)
 	if self:IsReloading() then
 	
 		self.rotationSpeed = 4
-
+			
 		if self.reloadPhase == 0 then
-			
-			self.reloadSupportOffsetSpeed = 20
-		
-			self.reloadSupportOffsetTarget = Vector(-7, 0)
-		
-			if not self.chamberOnReload then
-				self.reloadPhase = 1;
-			end
-		
-			self.reloadDelay = self.reloadPrepareDelay.BoltBack;
-			self.afterDelay = self.reloadAfterDelay.BoltBack;		
-			
-			self.prepareSound = self.reloadPrepareSounds.BoltBack;
-			self.prepareSoundLength = self.reloadPrepareLengths.BoltBack;
-			self.afterSound = self.reloadAfterSounds.BoltBack;
-			
-			self.rotationTarget = 45;
-			
-		elseif self.reloadPhase == 1 then
 		
 		
 			self.reloadSupportOffsetSpeed = 16
@@ -181,12 +164,10 @@ function Update(self)
 			self.prepareSoundLength = self.reloadPrepareLengths.MagOut;
 			self.afterSound = self.reloadAfterSounds.MagOut;
 			
-			self.reloadingVectorTarget = Vector(7, 0);
-			self.rotationTarget = 45;
+			self.reloadingVectorTarget = Vector(1, 0);
+			self.rotationTarget = -5;
 			
-		elseif self.reloadPhase == 2 then
-		
-			self.reloadingVector = Vector(5, 0);
+		elseif self.reloadPhase == 1 then
 		
 			self.reloadSupportOffsetSpeed = 10
 		
@@ -199,53 +180,27 @@ function Update(self)
 			self.prepareSoundLength = self.reloadPrepareLengths.MagIn;
 			self.afterSound = self.reloadAfterSounds.MagIn;
 			
-			self.reloadingVectorTarget = Vector(8, 0);
-			self.rotationTarget = 70;
-	
-		elseif self.reloadPhase == 3 then
+			self.reloadingVectorTarget = Vector(6, 0);
+			self.rotationTarget = 25;
 		
-			self.reloadSupportOffsetSpeed = 5
+		elseif self.reloadPhase == 2 then
 		
-			self.reloadSupportOffsetTarget = Vector(7, 5)
-		
-			self.reloadDelay = self.reloadPrepareDelay.BatteryOut;
-			self.afterDelay = self.reloadAfterDelay.BatteryOut;		
-			
-			self.prepareSound = self.reloadPrepareSounds.BatteryOut;
-			self.prepareSoundLength = self.reloadPrepareLengths.BatteryOut;
-			self.afterSound = self.reloadAfterSounds.BatteryOut;
-			
-			self.reloadingVectorTarget = Vector(7, 0);
-			self.rotationTarget = 15;
-			
-		elseif self.reloadPhase == 4 then
-		
-			self.reloadSupportOffsetTarget = Vector(4, 7)
-		
-			self.reloadDelay = self.reloadPrepareDelay.BatteryIn;
-			self.afterDelay = self.reloadAfterDelay.BatteryIn;		
-			
-			self.prepareSound = self.reloadPrepareSounds.BatteryIn;
-			self.prepareSoundLength = self.reloadPrepareLengths.BatteryIn;
-			self.afterSound = self.reloadAfterSounds.BatteryIn;
-			
-			self.reloadingVectorTarget = Vector(0, 0);
-			self.rotationTarget = 15;
-		
-		elseif self.reloadPhase == 5 then
-		
-			self.reloadSupportOffsetTarget = Vector(-3, 1)
+			self.reloadSupportOffsetTarget = Vector(-3, -4)
 		
 			self.Frame = 3;
 			
-			self.reloadDelay = self.reloadPrepareDelay.BoltForward;
-			self.afterDelay = self.reloadAfterDelay.BoltForward;		
+			self.reloadDelay = self.reloadPrepareDelay.BoltChamber;
+			self.afterDelay = self.reloadAfterDelay.BoltChamber;		
 			
-			self.prepareSound = self.reloadPrepareSounds.BoltForward;
-			self.prepareSoundLength = self.reloadPrepareLengths.BoltForward;
-			self.afterSound = self.reloadAfterSounds.BoltForward;
+			self.prepareSound = self.reloadPrepareSounds.BoltChamber;
+			self.prepareSoundLength = self.reloadPrepareLengths.BoltChamber;
+			self.afterSound = self.reloadAfterSounds.BoltChamber;
 			
-			self.rotationTarget = 0;
+			self.reloadingVectorTarget = Vector(4, 0);
+			
+			self.rotationSpeed = 9
+			
+			self.rotationTarget = -5;
 			
 		end
 		
@@ -257,18 +212,8 @@ function Update(self)
 		end
 	
 		if self.reloadTimer:IsPastSimMS(self.reloadDelay) then
-		
-			if self.reloadPhase == 0 then
-				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*4.5)) then
-					self.Frame = 3;
-				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*3)) then
-					self.Frame = 2;
-				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.5)) then
-					self.Frame = 1;
-
-				end		
 				
-			elseif self.reloadPhase == 1 then
+			if self.reloadPhase == 0 then
 			
 				self.reloadSupportOffsetSpeed = 20
 				
@@ -279,85 +224,35 @@ function Update(self)
 				end
 			
 				self:SetNumberValue("MagRemoved", 1);
-			elseif self.reloadPhase == 2 then
+			elseif self.reloadPhase == 1 then
 			
 				self.reloadSupportOffsetSpeed = 20
 			
 				self.reloadSupportOffsetTarget = Vector(-7, 3)
 			
 				self:RemoveNumberValue("MagRemoved");
-				
-			elseif self.reloadPhase == 3 then
-				
-				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.5)) then
-					self.reloadSupportOffsetSpeed = 6
-					self.reloadSupportOffsetTarget = Vector(-6, 8)
 
-				end		
-			
-			
-				self:SetNumberValue("BatteryRemoved", 1);
-			elseif self.reloadPhase == 4 then
-			
-				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.5)) then
-					self.reloadSupportOffsetTarget = Vector(4, 2)
-				else
-					self.reloadSupportOffsetSpeed = 15
-					self.reloadSupportOffsetTarget = Vector(7, 2)
-
-				end		
-				
-				self:RemoveNumberValue("BatteryRemoved");
-
-			elseif self.reloadPhase == 5 then
-				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.4)) then
+			elseif self.reloadPhase == 2 then
+				self.reloadSupportOffsetSpeed = 30
+				self.reloadSupportOffsetTarget = Vector(-5, -4)
+				if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*3)) then
 					self.Frame = 0;
-				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.8)) then
-					self.Frame = 1;
-				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.2)) then
-					self.Frame = 2;
 					self.reloadSupportOffsetSpeed = 16
-					self.reloadSupportOffsetTarget = Vector(4, 2)
-				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.6)) then
-					self.Frame = 3;
+					self.reloadSupportOffsetTarget = Vector(-2, 4)
+				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2)) then
+					self.Frame = 1;
+				elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1)) then
+					self.Frame = 2;
 				end
 			end
 			
 			if self.afterSoundPlayed ~= true then
-			
+					
 				if self.reloadPhase == 0 then
-				
-					self.horizontalAnim = self.horizontalAnim + 1;
-					self.angVel = self.angVel - 4;
-					self.phaseOnStop = nil;
-					
-					self.boltLockedBack = true;
-					
-				elseif self.reloadPhase == 1 then
-					self.phaseOnStop = 2;
+					self.phaseOnStop = 1;
 					local fake
-					fake = CreateMOSRotating("Fake Magazine MOSRotating Electradyne BattleGun");
-					fake.Pos = self.Pos + Vector(-11 * self.FlipFactor, 4):RadRotate(self.RotAngle);
-					fake.Vel = self.Vel + Vector(2*self.FlipFactor, 1):RadRotate(self.RotAngle);
-					fake.RotAngle = self.RotAngle;
-					fake.AngularVel = self.AngularVel + (-1*self.FlipFactor);
-					fake.HFlipped = self.HFlipped;
-					MovableMan:AddParticle(fake);
-					
-					self.angVel = self.angVel + 2;
-					self.verticalAnim = self.verticalAnim + 1
-					
-				elseif self.reloadPhase == 2 then
-					self.phaseOnStop = 3;
-					self.angVel = self.angVel - 2;
-					self.verticalAnim = self.verticalAnim - 1	
-					self:RemoveNumberValue("MagRemoved");
-					
-				elseif self.reloadPhase == 3 then
-					self.phaseOnStop = 4;
-					local fake
-					fake = CreateMOSRotating("Fake Battery MOSRotating Electradyne BattleGun");
-					fake.Pos = self.Pos + Vector(10 * self.FlipFactor, 1):RadRotate(self.RotAngle);
+					fake = CreateMOSRotating("Fake Magazine MOSRotating Ayzeuldah");
+					fake.Pos = self.Pos + Vector(-5 * self.FlipFactor, 2):RadRotate(self.RotAngle);
 					fake.Vel = self.Vel + Vector(0*self.FlipFactor, 1):RadRotate(self.RotAngle);
 					fake.RotAngle = self.RotAngle;
 					fake.AngularVel = self.AngularVel + (-1*self.FlipFactor);
@@ -367,9 +262,9 @@ function Update(self)
 					self.angVel = self.angVel + 2;
 					self.verticalAnim = self.verticalAnim + 1
 					
-				elseif self.reloadPhase == 4 then
+				elseif self.reloadPhase == 1 then
 					if self.chamberOnReload then
-						self.phaseOnStop = 5;
+						self.phaseOnStop = 2;
 					else
 						self.ReloadTime = 0; -- done! no after delay if non-chambering reload.
 						self.reloadPhase = 0;
@@ -379,9 +274,9 @@ function Update(self)
 					end
 					self.angVel = self.angVel - 2;
 					self.verticalAnim = self.verticalAnim - 1	
-					self:RemoveNumberValue("BatteryRemoved");
+					self:RemoveNumberValue("MagRemoved");
 					
-				elseif self.reloadPhase == 5 then
+				elseif self.reloadPhase == 2 then
 					self.boltLockedBack = false;
 					self.horizontalAnim = self.horizontalAnim + 1;
 					self.angVel = self.angVel + 4;
@@ -399,9 +294,10 @@ function Update(self)
 				self.reloadTimer:Reset();
 				self.prepareSoundPlayed = false;
 				self.afterSoundPlayed = false;
-				if self.chamberOnReload and self.reloadPhase == 4 then
+				if self.chamberOnReload and self.reloadPhase == 1 then
 					self.reloadPhase = self.reloadPhase + 1;
-				elseif self.reloadPhase == 4 or self.reloadPhase == 5 then
+					self.reloadPrepareDelay.MagOut = 300
+				elseif self.reloadPhase == 2 then
 					self.ReloadTime = 0;
 					self.reloadPhase = 0;
 					self.reloadingVectorTarget = nil;
@@ -428,24 +324,22 @@ function Update(self)
 	end
 	
 	if self.boltLockedBack then
-		self.Frame = 3;
+		self.Frame = 1;
 	end
 	
 	if self:DoneReloading() == true and self.chamberOnReload then
-		self.Magazine.RoundCount = 12
+		self.Magazine.RoundCount = 14
 		self.chamberOnReload = false;
 	elseif self:DoneReloading() then
-		self.Magazine.RoundCount = 13
+		self.Magazine.RoundCount = 15
 		self.chamberOnReload = false;
 	end
 	
 	local fire = self:IsActivated() and self.RoundInMagCount > 0;
-	
-	if self.RoundInMagCount > 0 then
-		self:Deactivate()
-	end
 
 	if self.parent and self.delayedFirstShot == true then
+	
+		self:Deactivate()
 		
 		--if self.parent:GetController():IsState(Controller.WEAPON_FIRE) and not self:IsReloading() then
 		if fire and not self:IsReloading() then
@@ -475,15 +369,18 @@ function Update(self)
 	
 		if self.RoundInMagCount > 0 then
 		else
+			self.boltLockedBack = true;
+			self.mechLastSound:Play(self.Pos);
+			self.reloadPrepareDelay.MagOut = 700
 			self.chamberOnReload = true;
 			self.reloadPhase = 0;
 		end
 	
-		self.horizontalAnim = 18
+		self.horizontalAnim = 5
 	
 		self.FireTimer:Reset();
 	
-		self.angVel = self.angVel - RangeRand(0.7,1.1) * 15
+		self.angVel = self.angVel - RangeRand(0.7,1.1) * 4
 		
 		self.canSmoke = true
 		
@@ -549,9 +446,29 @@ function Update(self)
 		
 		if outdoorRays >= self.rayThreshold then
 			self.reflectionOutdoorsSound:Play(self.Pos);
+			if self.autoFiring then
+				self.noiseAutoOutdoorsSound:Play(self.Pos);
+			end
 		else
 			self.reflectionIndoorsSound:Play(self.Pos);
+			if self.autoFiring then
+				self.noiseAutoIndoorsSound:Play(self.Pos);
+			end
 		end
+		
+		self.activeAddSound:Play(self.Pos);
+		
+		if self.autoFiring then
+			self.mechAutoSound:Play(self.Pos);
+		end
+		
+		self.autoFiring = true;
+		
+		self.activeAddSound = self.addAutoSound
+		
+	elseif self.autoFiring and not self:IsActivated() then
+		self.autoFiring = false;
+		self.activeAddSound = self.addSound
 	end
 	
 	if self.delayedFire and self.delayedFireTimer:IsPastSimMS(self.delayedFireTimeMS) then
