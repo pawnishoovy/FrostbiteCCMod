@@ -336,6 +336,12 @@ function Update(self)
 	end
 	
 	local fire = self:IsActivated() and self.RoundInMagCount > 0;
+	
+	if self.RoundInMagCount > 0 and self.delayedFirstShot then
+	
+		self:Deactivate()
+		
+	end
 
 	if self.parent and self.delayedFirstShot == true then
 	
