@@ -5,7 +5,7 @@ function Create(self)
 	-- Sounds --
 	
 	self.preSound = CreateSoundContainer("Pre Valerian .55", "Frostbite.rte");
-	self.reflectionIndoorsSound = CreateSoundContainer("ReflectionOutdoors Valerian .55", "Frostbite.rte");
+	self.reflectionIndoorsSound = CreateSoundContainer("ReflectionIndoors Valerian .55", "Frostbite.rte");
 	self.reflectionOutdoorsSound = CreateSoundContainer("ReflectionOutdoors Valerian .55", "Frostbite.rte");
 	
 	self.reloadPrepareSounds = {}
