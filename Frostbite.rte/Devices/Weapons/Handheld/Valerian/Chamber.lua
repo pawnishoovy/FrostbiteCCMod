@@ -453,7 +453,7 @@ function Update(self)
 	
 	if self.FiredFrame then
 	
-		self.horizontalAnim = math.min(7, math.max(15, self.recoilStrength));
+		self.horizontalAnim = 20;
 	
 		self.FireTimer:Reset();
 	
