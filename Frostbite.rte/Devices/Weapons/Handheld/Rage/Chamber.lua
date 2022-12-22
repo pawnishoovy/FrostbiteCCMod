@@ -315,13 +315,8 @@ function Update(self)
 		self.ReloadTime = 9999;
 	end
 	
-	if self:DoneReloading() == true and self.chamberOnReload then
+	if self:DoneReloading() then
 		self.fireDelayTimer:Reset()
-		self.chamberOnReload = false;
-		self.Magazine.RoundCount = 9;
-	elseif self:DoneReloading() then
-		self.fireDelayTimer:Reset()
-		self.chamberOnReload = false;
 		self.Magazine.RoundCount = 10;
 	end	
 
@@ -578,12 +573,14 @@ function Update(self)
 				if self.autoFireMode then
 					self.autoFireMode = false;
 					self.switchSingleSound:Play(self.Pos);
+					self.switchAutoSound:Stop(-1);
 					self.RateOfFire = 100;
 					self.FullAuto = false;
 					self.recoilStrength = 40;
 				else
 					self.autoFireMode = true;
 					self.switchAutoSound:Play(self.Pos);
+					self.switchSingleSound:Stop(-1);
 					self.RateOfFire = 430;
 					self.FullAuto = true;
 					self.recoilStrength = 32;
