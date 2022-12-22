@@ -51,7 +51,7 @@ function Create(self)
 		local particle = CreateMOSParticle("Tiny Smoke Ball 1");
 		particle.Pos = self.Pos
 		particle.Vel = self.Vel + Vector(velocity,0):RadRotate(spread) * (50 * 0.2)
-		particle.Lifetime = particle.Lifetime * RangeRand(0.9, 1.6) * 0.9 * 25
+		particle.Lifetime = particle.Lifetime * RangeRand(0.9, 1.6) * 0.9 * 2
 		particle.AirThreshold = particle.AirThreshold * 0.5
 		particle.GlobalAccScalar = -0.0001
 		MovableMan:AddParticle(particle);
