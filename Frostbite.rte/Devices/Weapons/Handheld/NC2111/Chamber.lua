@@ -88,6 +88,20 @@ function Create(self)
 	self.recoilMax = 4 -- in deg.
 	self.originalSharpLength = self.SharpLength
 	-- Progressive Recoil System 
+	
+	
+	-- Frostbite Smartgun System --
+	
+	self.smartGunSearchTimer = Timer();
+	self.smartGunSearchDelay = 35; -- time between every single ray, NOT total time for one entire scan!
+	
+	self.smartGunRange = 350;
+	
+	self.smartGunScanCone = 20 -- in deg
+	self.smartGunRayAngle = math.rad(self.smartGunScanCone/2) -- in increments of 2.5 deg
+	
+	self.smartGunTarget = nil;
+	
 end
 
 function Update(self)
@@ -485,6 +499,69 @@ function Update(self)
 	
 	-- Animation
 	if self.parent then
+	
+		-- FROSTBITE SMARTGUN SYSTEM --
+		
+		if self.smartGunTarget then -- target already acquired
+		
+			PrimitiveMan:DrawCirclePrimitive(self.smartGunTarget.Pos, 10, 122)
+		
+			if self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay * 10) then
+				-- check that target is still in view
+				
+				if SceneMan:CastObstacleRay(self.MuzzlePos, SceneMan:ShortestDistance(self.MuzzlePos, self.smartGunTarget.Pos, SceneMan.SceneWrapsX), Vector(), Vector(), self.smartGunTarget.ID, self.smartGunTarget.Team, rte.airID, 10) < 0 then			
+					-- still in view, do nothing						
+				else				
+					self.smartGunTarget = nil;					
+				end
+				
+				-- check if the player is aiming directly at a new target
+				
+				local smartGunRay = Vector(self.smartGunRange*1.3*self.FlipFactor, 0):RadRotate(self.RotAngle)
+				local moCheck = SceneMan:CastMORay(self.MuzzlePos, smartGunRay, self.ID, self.Team, 0, false, 3); -- Raycast		
+				PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
+				
+				if moCheck ~= rte.NoMOID then
+					local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
+					
+					if IsAHuman(rootMO) then
+						self.smartGunTarget = ToAHuman(rootMO);
+					elseif IsACrab(rootMO) then
+						self.smartGunTarget = ToACrab(rootMO);
+					end
+				end
+				
+				self.smartGunSearchTimer:Reset();
+			end
+				
+				
+		elseif self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay) then
+
+			if self.smartGunRayAngle <= math.rad(-self.smartGunScanCone/2) then
+				self.smartGunRayAngle = math.rad(self.smartGunScanCone/2);
+			end			
+		
+			self.smartGunRayAngle = (self.smartGunRayAngle - math.rad(2.5))
+			local smartGunRay = Vector(self.smartGunRange*self.FlipFactor, 0):RadRotate(self.RotAngle + self.smartGunRayAngle)
+			local moCheck = SceneMan:CastMORay(self.MuzzlePos, smartGunRay, self.ID, self.Team, 0, false, 3); -- Raycast		
+			PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
+			
+			if moCheck ~= rte.NoMOID then
+				local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
+				
+				if IsAHuman(rootMO) then
+					self.smartGunTarget = ToAHuman(rootMO);
+				elseif IsACrab(rootMO) then
+					self.smartGunTarget = ToACrab(rootMO);
+				end
+			end
+			
+			self.smartGunSearchTimer:Reset();
+		end
+		
+		-- END FROSTBITE SMARTGUN SYSTEM -- 
+			
+	
 		self.horizontalAnim = math.floor(self.horizontalAnim / (1 + TimerMan.DeltaTimeSecs * 24.0) * 1000) / 1000
 		self.verticalAnim = math.floor(self.verticalAnim / (1 + TimerMan.DeltaTimeSecs * 15.0) * 1000) / 1000
 		
