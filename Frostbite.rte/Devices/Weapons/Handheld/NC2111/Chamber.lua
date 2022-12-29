@@ -412,6 +412,19 @@ function Update(self)
 	
 	if self.FiredFrame then
 	
+		local shot = CreateMOSRotating("Frostbite Gyrojet Small", "Frostbite.rte");
+		shot.Pos = self.MuzzlePos + Vector(2 * self.FlipFactor,0):RadRotate(self.RotAngle);
+		shot.RotAngle = self.RotAngle
+		shot.HFlipped = self.HFlipped
+		shot.Vel = self.Vel + Vector(60 * self.FlipFactor,0):RadRotate(self.RotAngle);
+		shot.Team = self.Team;
+		shot.IgnoresTeamHits = true;
+		shot:SetNumberValue("WoundCountMultiplier", 2);
+		if self.smartGunTarget then
+			shot:SetNumberValue("TargetID", self.smartGunTarget.ID);
+		end
+		MovableMan:AddParticle(shot);
+	
 		self.horizontalAnim = 5;
 	
 		self.FireTimer:Reset();
@@ -509,7 +522,7 @@ function Update(self)
 			if self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay * 10) then
 				-- check that target is still in view
 				
-				if SceneMan:CastObstacleRay(self.MuzzlePos, SceneMan:ShortestDistance(self.MuzzlePos, self.smartGunTarget.Pos, SceneMan.SceneWrapsX), Vector(), Vector(), self.smartGunTarget.ID, self.smartGunTarget.Team, rte.airID, 10) < 0 then			
+				if SceneMan:CastStrengthSumRay(self.MuzzlePos, self.smartGunTarget.Pos, 3, 0) < 15 then			
 					-- still in view, do nothing						
 				else				
 					self.smartGunTarget = nil;					
@@ -519,7 +532,7 @@ function Update(self)
 				
 				local smartGunRay = Vector(self.smartGunRange*1.3*self.FlipFactor, 0):RadRotate(self.RotAngle)
 				local moCheck = SceneMan:CastMORay(self.MuzzlePos, smartGunRay, self.ID, self.Team, 0, false, 3); -- Raycast		
-				PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
+				--PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
 				
 				if moCheck ~= rte.NoMOID then
 					local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
@@ -544,7 +557,7 @@ function Update(self)
 			self.smartGunRayAngle = (self.smartGunRayAngle - math.rad(2.5))
 			local smartGunRay = Vector(self.smartGunRange*self.FlipFactor, 0):RadRotate(self.RotAngle + self.smartGunRayAngle)
 			local moCheck = SceneMan:CastMORay(self.MuzzlePos, smartGunRay, self.ID, self.Team, 0, false, 3); -- Raycast		
-			PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
+			--PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
 			
 			if moCheck ~= rte.NoMOID then
 				local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
