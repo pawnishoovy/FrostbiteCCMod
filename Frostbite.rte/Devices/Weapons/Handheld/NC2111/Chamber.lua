@@ -101,6 +101,10 @@ function Create(self)
 	self.smartGunPotentialTargetTable = {};
 	self.smartGunIgnoreThisScanTable = {};
 	
+	self.smartGunTargetTable = {};
+	self.smartGunMaxSimultaneousTargets = 1;
+	self.smartGunCurrentTargetIndex = 0;
+	
 	self.smartGunScanningTargetCounter = 0;
 	self.smartGunMaxSimultaneousScans = 3;
 	
@@ -113,11 +117,12 @@ function Create(self)
 	self.smartGunRayAngle = math.rad(self.smartGunScanCone/2)
 	self.smartGunOverloadConeNarrow = 0;
 	
+	self.smartGunUpdateTimer = Timer();
+	self.smartGunUpdateTime = 200;
+	
 	self.smartGunSearchTimer = Timer();
 	self.smartGunSearchScanTime = 250 -- one scan is a full series of rays in the scancone, and counts as one blip of scanning, so this times blip requirement is total ms time to lock on
 	self.smartGunSearchDelay = self.smartGunSearchScanTime/(self.smartGunScanCone/2.5); -- time between every single ray
-	
-	self.smartGunTarget = nil;
 	
 end
 
@@ -436,8 +441,9 @@ function Update(self)
 		shot.Vel = self.Vel + Vector(RangeRand(-1, 1), RangeRand(-1, 1)) + Vector(45 * self.FlipFactor,0):RadRotate(self.RotAngle);
 		shot.Team = self.Team;
 		shot.IgnoresTeamHits = true;
-		if self.smartGunTarget then
-			shot:SetNumberValue("TargetID", self.smartGunTarget.ID);
+		if #self.smartGunTargetTable > 0 then
+			shot:SetNumberValue("TargetID", self.smartGunTargetTable[self.smartGunCurrentTargetIndex + 1].ID);
+			self.smartGunCurrentTargetIndex = (self.smartGunCurrentTargetIndex + 1) % #self.smartGunTargetTable;
 		end
 		MovableMan:AddParticle(shot);
 	
@@ -531,9 +537,7 @@ function Update(self)
 	
 		-- FROSTBITE SMARTGUN SYSTEM --
 		
-		if self.smartGunTarget then -- target already acquired
-		
-			PrimitiveMan:DrawCirclePrimitive(self.smartGunTarget.Pos, 10, 122)
+		if #self.smartGunTargetTable == self.smartGunMaxSimultaneousTargets then -- targets already acquired
 		
 			if self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay * 10) then
 				
@@ -546,7 +550,15 @@ function Update(self)
 				if moCheck ~= rte.NoMOID then
 					local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
 					
-					if rootMO.ID ~= self.smartGunTarget.ID then
+					local alreadyTargetted = false;
+					
+					for i = 1, #self.smartGunTargetTable do
+						if rootMO.UniqueID == self.smartGunTargetTable[i].UniqueID then
+							alreadyTargetted = true;
+						end
+					end
+					
+					if not alreadyTargetted and (IsAHuman(rootMO) or IsACrab(rootMO)) then
 					
 						self.smartGunBlipSound:Play(self.Pos);
 					
@@ -571,32 +583,20 @@ function Update(self)
 						
 							self.smartGunRelockSound:Play(self.Pos);
 						
+							-- push out first target
+							
+							table.remove(self.smartGunTargetTable, 1);
+							
 							if IsAHuman(rootMO) then
-								self.smartGunTarget = ToAHuman(rootMO);
+								table.insert(self.smartGunTargetTable, ToAHuman(rootMO));
 							elseif IsACrab(rootMO) then
-								self.smartGunTarget = ToACrab(rootMO);
+								table.insert(self.smartGunTargetTable, ToACrab(rootMO));
 							end
 						end
 					end
 				else
 					self.smartGunPotentialTargetTable = {};
 				end	
-				
-				-- check that target is still in view
-				
-				if SceneMan:CastStrengthSumRay(self.MuzzlePos, self.smartGunTarget.Pos, 3, 0) < 15 then			
-					-- still in view
-				else			
-					self.smartGunUnlockSound:Play(self.Pos);
-					self.smartGunPotentialTargetTable = {};
-					self.smartGunTarget = nil;					
-				end
-				
-				if self.smartGunTarget and self.smartGunTarget:IsDead() or not MovableMan:ValidMO(self.smartGunTarget) then
-					self.smartGunPotentialTargetTable = {};
-					self.smartGunUnlockSound:Play(self.Pos);
-					self.smartGunTarget = nil;
-				end
 				
 				self.smartGunSearchTimer:Reset();
 			end
@@ -637,7 +637,15 @@ function Update(self)
 			
 				local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
 				
-				if (not self.smartGunIgnoreThisScanTable[rootMO.UniqueID] == true) and (IsAHuman(rootMO) or IsACrab(rootMO)) then
+				local alreadyTargetted = false;
+				
+				for i = 1, #self.smartGunTargetTable do
+					if rootMO.UniqueID == self.smartGunTargetTable[i].UniqueID then
+						alreadyTargetted = true;
+					end
+				end
+				
+				if (not self.smartGunIgnoreThisScanTable[rootMO.UniqueID]) and (not alreadyTargetted) and (IsAHuman(rootMO) or IsACrab(rootMO)) then
 				
 					self.smartGunIgnoreThisScanTable[rootMO.UniqueID] = true;
 				
@@ -661,14 +669,14 @@ function Update(self)
 					
 					if self.smartGunPotentialTargetTable[rootMO.UniqueID] >= self.smartGunBlipLockOnThreshold then					
 					
-						self.smartGunPotentialTargetTable = {};
+						self.smartGunPotentialTargetTable[rootMO.UniqueID] = nil; -- no longer has potential, because it just became an actual target!
 						
 						self.smartGunLockSound:Play(self.Pos);				
 						
 						if IsAHuman(rootMO) then
-							self.smartGunTarget = ToAHuman(rootMO);
+							table.insert(self.smartGunTargetTable, ToAHuman(rootMO));
 						elseif IsACrab(rootMO) then
-							self.smartGunTarget = ToACrab(rootMO);
+							table.insert(self.smartGunTargetTable, ToACrab(rootMO));
 						end
 					end
 				end
@@ -677,10 +685,49 @@ function Update(self)
 			self.smartGunSearchTimer:Reset();
 		end
 		
+		if #self.smartGunTargetTable > 0 then
+			-- validate any targets
+			
+			for i = 1, #self.smartGunTargetTable do
+				PrimitiveMan:DrawCirclePrimitive(self.smartGunTargetTable[i].Pos, 10, 122)
+			end
+			
+			if self.smartGunUpdateTimer:IsPastSimMS(self.smartGunUpdateTime) then
+			
+				self.smartGunUpdateTimer:Reset();
+			
+				-- check that targets are still in view
+				
+				for i = 1, #self.smartGunTargetTable do
+				
+					if not MovableMan:ValidMO(self.smartGunTargetTable[i]) then
+						table.remove(self.smartGunTargetTable, i);
+					end
+				
+					if self.smartGunTargetTable[i] and SceneMan:CastStrengthSumRay(self.MuzzlePos, self.smartGunTargetTable[i].Pos, 3, 0) < 15 then			
+						-- still in view
+					else			
+						self.smartGunUnlockSound:Play(self.Pos);
+						table.remove(self.smartGunTargetTable, i);
+						self.smartGunCurrentTargetIndex = 0;
+					end
+					
+					if self.smartGunTargetTable[i] and self.smartGunTargetTable[i]:IsDead() then
+						self.smartGunUnlockSound:Play(self.Pos);
+						table.remove(self.smartGunTargetTable, i);
+						self.smartGunCurrentTargetIndex = 0;
+					end					
+					
+				end
+				
+			end
+			
+		end
+			
 		-- draw blips on top of targets being scanned
 		
 		for k, v in pairs(self.smartGunPotentialTargetTable) do
-			if k ~= nil then
+			if k > 0 then -- this should never be nil, but... sometimes it is? and checking it that way doesn't work?
 				for i = 1, v do
 					local mo = MovableMan:FindObjectByUniqueID(k)
 					if mo then
