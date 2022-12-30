@@ -281,7 +281,7 @@ function Update(self)
 		for i = 1, trailLength do
 			if RangeRand(0,1) < (1 - self.trailGLoss) then
 				--smoke = CreateMOPixel("Frostbite Hitscan Micro Smoke Ball "..math.random(1,4));
-				smoke = CreateMOPixel("Frostbite Hitscan Micro Smoke Ball "..math.random(1,4));
+				smoke = CreateMOPixel("Frostbite Micro Smoke Ball "..math.random(1,4));
 				if smoke then
 					
 					local a = 10 * self.TrailWavenessSpeed;

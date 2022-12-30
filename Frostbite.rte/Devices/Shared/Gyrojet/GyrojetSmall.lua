@@ -8,6 +8,8 @@ function Create(self)
 	self.width = math.floor(ToMOSprite(self):GetSpriteWidth() * 0.5 + 0.5);
 	self.woundCountMultiplier = self:NumberValueExists("WoundCountMultiplier") and self:GetNumberValue("WoundCountMultiplier") or 1;
 	
+	self.homingStrength = 85;
+	
 	if self:NumberValueExists("TargetID") and self:GetNumberValue("TargetID") ~= rte.NoMOID then
 		local mo = MovableMan:GetMOFromID(self:GetNumberValue("TargetID"));
 		if mo and IsActor(mo) then
@@ -24,9 +26,10 @@ function Create(self)
 			local velAngleTestTarget = Vector(100, 0):RadRotate(angToTarget)
 			local velTestDif = velAngleTestTarget - velAngleTest
 			
-			if velTestDif.Magnitude > 120 then
+			if velTestDif.Magnitude > 65 then
 				self.homingDelayTimer = Timer();
 				self.homingDelay = 100;
+				self.homingStrength = 160;
 				
 				self.engageSound = CreateSoundContainer("Gyrojet Small Engage Turn Frostbite", "Frostbite.rte");
 				
@@ -67,7 +70,7 @@ function Update(self)
 		--print(velDif.Magnitude)
 		
 		-- acceleration
-		self.Vel = self.Vel + (velDif:SetMagnitude(math.max(velDif.Magnitude, 85)) * TimerMan.DeltaTimeSecs * 4)
+		self.Vel = self.Vel + (velDif:SetMagnitude(math.max(velDif.Magnitude, self.homingStrength)) * TimerMan.DeltaTimeSecs * 4)
 	end
 
 end

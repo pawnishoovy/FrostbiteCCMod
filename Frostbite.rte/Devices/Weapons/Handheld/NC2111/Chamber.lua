@@ -92,13 +92,24 @@ function Create(self)
 	
 	-- Frostbite Smartgun System --
 	
-	self.smartGunSearchTimer = Timer();
-	self.smartGunSearchDelay = 35; -- time between every single ray, NOT total time for one entire scan!
+	self.smartGunBlipLockOnThreshold = 2;
+	self.smartGunPotentialTargetTable = {};
+	self.smartGunIgnoreThisScanTable = {};
+	
+	self.smartGunScanningTargetCounter = 0;
+	self.smartGunMaxSimultaneousScans = 1;
+	
+	self.smartGunFailedScans = 0;
+	self.smartGunScanLossThreshold = 6;
 	
 	self.smartGunRange = 350;
 	
-	self.smartGunScanCone = 20 -- in deg
-	self.smartGunRayAngle = math.rad(self.smartGunScanCone/2) -- in increments of 2.5 deg
+	self.smartGunScanCone = 20 -- in deg, keep at increments of 2.5
+	self.smartGunRayAngle = math.rad(self.smartGunScanCone/2)
+	
+	self.smartGunSearchTimer = Timer();
+	self.smartGunSearchScanTime = 250 -- one scan is a full series of rays in the scancone, and counts as one blip of scanning, so this times blip requirement is total ms time to lock on
+	self.smartGunSearchDelay = self.smartGunSearchScanTime/(self.smartGunScanCone/2.5); -- time between every single ray
 	
 	self.smartGunTarget = nil;
 	
@@ -412,14 +423,13 @@ function Update(self)
 	
 	if self.FiredFrame then
 	
-		local shot = CreateMOSRotating("Frostbite Gyrojet Small", "Frostbite.rte");
+		local shot = CreateMOSRotating("NC2111 Gyrojet", "Frostbite.rte");
 		shot.Pos = self.MuzzlePos + Vector(2 * self.FlipFactor,0):RadRotate(self.RotAngle);
 		shot.RotAngle = self.RotAngle
 		shot.HFlipped = self.HFlipped
-		shot.Vel = self.Vel + Vector(60 * self.FlipFactor,0):RadRotate(self.RotAngle);
+		shot.Vel = self.Vel + Vector(RangeRand(-1, 1), RangeRand(-1, 1)) + Vector(45 * self.FlipFactor,0):RadRotate(self.RotAngle);
 		shot.Team = self.Team;
 		shot.IgnoresTeamHits = true;
-		shot:SetNumberValue("WoundCountMultiplier", 2);
 		if self.smartGunTarget then
 			shot:SetNumberValue("TargetID", self.smartGunTarget.ID);
 		end
@@ -515,15 +525,34 @@ function Update(self)
 	
 		-- FROSTBITE SMARTGUN SYSTEM --
 		
+		-- draw blips on top of targets being scanned
+		
+		for k, v in pairs(self.smartGunPotentialTargetTable) do
+			for i = 1, v do
+				local mo = MovableMan:FindObjectByUniqueID(k)
+				if mo then
+					local color = 5
+					local spacing = 4
+					local offset = Vector(0 - spacing * 0.5 + spacing * (i) - spacing * v / 2, 35)
+					local position = mo.AboveHUDPos + offset
+					PrimitiveMan:DrawCirclePrimitive(position + Vector(0,-2), 1, color);
+				else -- this is a faulty entry, nix it
+					k = nil;
+					v = nil;
+				end
+			end
+		end
+		
 		if self.smartGunTarget then -- target already acquired
 		
 			PrimitiveMan:DrawCirclePrimitive(self.smartGunTarget.Pos, 10, 122)
 		
 			if self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay * 10) then
+			
 				-- check that target is still in view
 				
 				if SceneMan:CastStrengthSumRay(self.MuzzlePos, self.smartGunTarget.Pos, 3, 0) < 15 then			
-					-- still in view, do nothing						
+					-- still in view
 				else				
 					self.smartGunTarget = nil;					
 				end
@@ -532,40 +561,112 @@ function Update(self)
 				
 				local smartGunRay = Vector(self.smartGunRange*1.3*self.FlipFactor, 0):RadRotate(self.RotAngle)
 				local moCheck = SceneMan:CastMORay(self.MuzzlePos, smartGunRay, self.ID, self.Team, 0, false, 3); -- Raycast		
-				--PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
+				PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
 				
 				if moCheck ~= rte.NoMOID then
 					local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
 					
-					if IsAHuman(rootMO) then
-						self.smartGunTarget = ToAHuman(rootMO);
-					elseif IsACrab(rootMO) then
-						self.smartGunTarget = ToACrab(rootMO);
+					if rootMO.ID ~= self.smartGunTarget.ID then
+					
+						if self.smartGunPotentialTargetTable[rootMO.UniqueID] then
+							self.smartGunPotentialTargetTable[rootMO.UniqueID] = self.smartGunPotentialTargetTable[rootMO.UniqueID] + 1
+						else
+							self.smartGunScanningTargetCounter = self.smartGunScanningTargetCounter + 1
+							if self.smartGunScanningTargetCounter > self.smartGunMaxSimultaneousScans then
+								-- delete the first scanned target
+								for k, v in ipairs(self.smartGunPotentialTargetTable) do
+									k = nil;
+									v = nil;
+									break;
+								end
+							end
+							self.smartGunPotentialTargetTable[rootMO.UniqueID] = 1;
+						end
+						
+						if self.smartGunPotentialTargetTable[rootMO.UniqueID] >= self.smartGunBlipLockOnThreshold then
+						
+							self.smartGunPotentialTargetTable = {};
+						
+							if IsAHuman(rootMO) then
+								self.smartGunTarget = ToAHuman(rootMO);
+							elseif IsACrab(rootMO) then
+								self.smartGunTarget = ToACrab(rootMO);
+							end
+						end
 					end
+				else
+					self.smartGunPotentialTargetTable = {};
+				end
+				
+				if self.smartGunTarget:IsDead() or not MovableMan:ValidMO(self.smartGunTarget) then
+					self.smartGunTarget = nil;
 				end
 				
 				self.smartGunSearchTimer:Reset();
 			end
 				
 				
-		elseif self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay) then
+		elseif self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay) then -- run scans
 
 			if self.smartGunRayAngle <= math.rad(-self.smartGunScanCone/2) then
+			
+				self.smartGunIgnoreThisScanTable = {};
+			
 				self.smartGunRayAngle = math.rad(self.smartGunScanCone/2);
+				
+				if not self.smartGunSuccessfulScan then
+					self.smartGunFailedScans = self.smartGunFailedScans + 1
+					if self.smartGunFailedScans >= self.smartGunScanLossThreshold then
+						self.smartGunPotentialTargetTable = {};
+						self.smartGunScanningTargetCounter = 0;
+					end
+				else
+					self.smartGunFailedScans = 0
+					self.smartGunSuccessfulScan = false;
+				end
+				
 			end			
 		
 			self.smartGunRayAngle = (self.smartGunRayAngle - math.rad(2.5))
 			local smartGunRay = Vector(self.smartGunRange*self.FlipFactor, 0):RadRotate(self.RotAngle + self.smartGunRayAngle)
 			local moCheck = SceneMan:CastMORay(self.MuzzlePos, smartGunRay, self.ID, self.Team, 0, false, 3); -- Raycast		
-			--PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
+			PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
 			
 			if moCheck ~= rte.NoMOID then
+			
+				self.smartGunSuccessfulScan = true;
+			
 				local rootMO = MovableMan:GetMOFromID((MovableMan:GetMOFromID(moCheck).RootID))
 				
-				if IsAHuman(rootMO) then
-					self.smartGunTarget = ToAHuman(rootMO);
-				elseif IsACrab(rootMO) then
-					self.smartGunTarget = ToACrab(rootMO);
+				if (not self.smartGunIgnoreThisScanTable[rootMO.UniqueID] == true) and (IsAHuman(rootMO) or IsACrab(rootMO)) then
+				
+					self.smartGunIgnoreThisScanTable[rootMO.UniqueID] = true;
+				
+					if self.smartGunPotentialTargetTable[rootMO.UniqueID] then
+						self.smartGunPotentialTargetTable[rootMO.UniqueID] = self.smartGunPotentialTargetTable[rootMO.UniqueID] + 1
+					else
+						self.smartGunScanningTargetCounter = self.smartGunScanningTargetCounter + 1
+						if self.smartGunScanningTargetCounter > self.smartGunMaxSimultaneousScans then
+							-- delete the first scanned target
+							for k, v in ipairs(self.smartGunPotentialTargetTable) do
+								k = nil;
+								v = nil;
+								break;
+							end
+						end
+						self.smartGunPotentialTargetTable[rootMO.UniqueID] = 1;
+					end
+					
+					if self.smartGunPotentialTargetTable[rootMO.UniqueID] >= self.smartGunBlipLockOnThreshold then
+					
+						self.smartGunPotentialTargetTable = {};
+						
+						if IsAHuman(rootMO) then
+							self.smartGunTarget = ToAHuman(rootMO);
+						elseif IsACrab(rootMO) then
+							self.smartGunTarget = ToACrab(rootMO);
+						end
+					end
 				end
 			end
 			
