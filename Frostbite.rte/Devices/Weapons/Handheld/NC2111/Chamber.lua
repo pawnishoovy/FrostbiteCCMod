@@ -92,12 +92,17 @@ function Create(self)
 	
 	-- Frostbite Smartgun System --
 	
-	self.smartGunBlipLockOnThreshold = 2;
+	self.smartGunBlipSound = CreateSoundContainer("Gyrojet Blip Default Frostbite", "Frostbite.rte");
+	self.smartGunLockSound = CreateSoundContainer("Gyrojet Lock Default Frostbite", "Frostbite.rte");
+	self.smartGunRelockSound = CreateSoundContainer("Gyrojet Relock Default Frostbite", "Frostbite.rte");
+	self.smartGunUnlockSound = CreateSoundContainer("Gyrojet Unlock Default Frostbite", "Frostbite.rte");
+	
+	self.smartGunBlipLockOnThreshold = 7;
 	self.smartGunPotentialTargetTable = {};
 	self.smartGunIgnoreThisScanTable = {};
 	
 	self.smartGunScanningTargetCounter = 0;
-	self.smartGunMaxSimultaneousScans = 1;
+	self.smartGunMaxSimultaneousScans = 3;
 	
 	self.smartGunFailedScans = 0;
 	self.smartGunScanLossThreshold = 6;
@@ -106,6 +111,7 @@ function Create(self)
 	
 	self.smartGunScanCone = 20 -- in deg, keep at increments of 2.5
 	self.smartGunRayAngle = math.rad(self.smartGunScanCone/2)
+	self.smartGunOverloadConeNarrow = 0;
 	
 	self.smartGunSearchTimer = Timer();
 	self.smartGunSearchScanTime = 250 -- one scan is a full series of rays in the scancone, and counts as one blip of scanning, so this times blip requirement is total ms time to lock on
@@ -525,37 +531,11 @@ function Update(self)
 	
 		-- FROSTBITE SMARTGUN SYSTEM --
 		
-		-- draw blips on top of targets being scanned
-		
-		for k, v in pairs(self.smartGunPotentialTargetTable) do
-			for i = 1, v do
-				local mo = MovableMan:FindObjectByUniqueID(k)
-				if mo then
-					local color = 5
-					local spacing = 4
-					local offset = Vector(0 - spacing * 0.5 + spacing * (i) - spacing * v / 2, 35)
-					local position = mo.AboveHUDPos + offset
-					PrimitiveMan:DrawCirclePrimitive(position + Vector(0,-2), 1, color);
-				else -- this is a faulty entry, nix it
-					k = nil;
-					v = nil;
-				end
-			end
-		end
-		
 		if self.smartGunTarget then -- target already acquired
 		
 			PrimitiveMan:DrawCirclePrimitive(self.smartGunTarget.Pos, 10, 122)
 		
 			if self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay * 10) then
-			
-				-- check that target is still in view
-				
-				if SceneMan:CastStrengthSumRay(self.MuzzlePos, self.smartGunTarget.Pos, 3, 0) < 15 then			
-					-- still in view
-				else				
-					self.smartGunTarget = nil;					
-				end
 				
 				-- check if the player is aiming directly at a new target
 				
@@ -568,15 +548,17 @@ function Update(self)
 					
 					if rootMO.ID ~= self.smartGunTarget.ID then
 					
+						self.smartGunBlipSound:Play(self.Pos);
+					
 						if self.smartGunPotentialTargetTable[rootMO.UniqueID] then
 							self.smartGunPotentialTargetTable[rootMO.UniqueID] = self.smartGunPotentialTargetTable[rootMO.UniqueID] + 1
 						else
 							self.smartGunScanningTargetCounter = self.smartGunScanningTargetCounter + 1
 							if self.smartGunScanningTargetCounter > self.smartGunMaxSimultaneousScans then
-								-- delete the first scanned target
-								for k, v in ipairs(self.smartGunPotentialTargetTable) do
-									k = nil;
-									v = nil;
+								-- delete, unfortunately, a random target. ordering them properly would Hurt
+								for k, v in pairs(self.smartGunPotentialTargetTable) do
+									self.smartGunPotentialTargetTable[k] = nil;
+									self.smartGunOverloadConeNarrow = 1
 									break;
 								end
 							end
@@ -587,6 +569,8 @@ function Update(self)
 						
 							self.smartGunPotentialTargetTable = {};
 						
+							self.smartGunRelockSound:Play(self.Pos);
+						
 							if IsAHuman(rootMO) then
 								self.smartGunTarget = ToAHuman(rootMO);
 							elseif IsACrab(rootMO) then
@@ -596,9 +580,21 @@ function Update(self)
 					end
 				else
 					self.smartGunPotentialTargetTable = {};
+				end	
+				
+				-- check that target is still in view
+				
+				if SceneMan:CastStrengthSumRay(self.MuzzlePos, self.smartGunTarget.Pos, 3, 0) < 15 then			
+					-- still in view
+				else			
+					self.smartGunUnlockSound:Play(self.Pos);
+					self.smartGunPotentialTargetTable = {};
+					self.smartGunTarget = nil;					
 				end
 				
-				if self.smartGunTarget:IsDead() or not MovableMan:ValidMO(self.smartGunTarget) then
+				if self.smartGunTarget and self.smartGunTarget:IsDead() or not MovableMan:ValidMO(self.smartGunTarget) then
+					self.smartGunPotentialTargetTable = {};
+					self.smartGunUnlockSound:Play(self.Pos);
 					self.smartGunTarget = nil;
 				end
 				
@@ -608,15 +604,18 @@ function Update(self)
 				
 		elseif self.smartGunSearchTimer:IsPastSimMS(self.smartGunSearchDelay) then -- run scans
 
-			if self.smartGunRayAngle <= math.rad(-self.smartGunScanCone/2) then
+			local scanCone = math.max(2.5, self.smartGunScanCone - (self.smartGunOverloadConeNarrow * 2.5));
+
+			if self.smartGunRayAngle <= math.rad(-scanCone/2) then
 			
 				self.smartGunIgnoreThisScanTable = {};
 			
-				self.smartGunRayAngle = math.rad(self.smartGunScanCone/2);
+				self.smartGunRayAngle = math.rad(scanCone/2);
 				
 				if not self.smartGunSuccessfulScan then
 					self.smartGunFailedScans = self.smartGunFailedScans + 1
 					if self.smartGunFailedScans >= self.smartGunScanLossThreshold then
+						self.smartGunOverloadConeNarrow = 0;
 						self.smartGunPotentialTargetTable = {};
 						self.smartGunScanningTargetCounter = 0;
 					end
@@ -626,8 +625,8 @@ function Update(self)
 				end
 				
 			end			
-		
-			self.smartGunRayAngle = (self.smartGunRayAngle - math.rad(2.5))
+			
+			self.smartGunRayAngle = (self.smartGunRayAngle - math.rad(math.min(scanCone/2, 2.5)))
 			local smartGunRay = Vector(self.smartGunRange*self.FlipFactor, 0):RadRotate(self.RotAngle + self.smartGunRayAngle)
 			local moCheck = SceneMan:CastMORay(self.MuzzlePos, smartGunRay, self.ID, self.Team, 0, false, 3); -- Raycast		
 			PrimitiveMan:DrawLinePrimitive(self.MuzzlePos, self.MuzzlePos + smartGunRay,  5);
@@ -647,19 +646,24 @@ function Update(self)
 					else
 						self.smartGunScanningTargetCounter = self.smartGunScanningTargetCounter + 1
 						if self.smartGunScanningTargetCounter > self.smartGunMaxSimultaneousScans then
-							-- delete the first scanned target
-							for k, v in ipairs(self.smartGunPotentialTargetTable) do
-								k = nil;
-								v = nil;
+							-- delete, unfortunately, a random target. ordering them properly would Hurt
+							for k, v in pairs(self.smartGunPotentialTargetTable) do
+								self.smartGunPotentialTargetTable[k] = nil;
+								self.smartGunOverloadConeNarrow = self.smartGunOverloadConeNarrow + 1
 								break;
 							end
 						end
 						self.smartGunPotentialTargetTable[rootMO.UniqueID] = 1;
 					end
 					
-					if self.smartGunPotentialTargetTable[rootMO.UniqueID] >= self.smartGunBlipLockOnThreshold then
+					self.smartGunBlipSound.Pitch = math.min(6, self.smartGunPotentialTargetTable[rootMO.UniqueID]);
+					self.smartGunBlipSound:Play(self.Pos);
+					
+					if self.smartGunPotentialTargetTable[rootMO.UniqueID] >= self.smartGunBlipLockOnThreshold then					
 					
 						self.smartGunPotentialTargetTable = {};
+						
+						self.smartGunLockSound:Play(self.Pos);				
 						
 						if IsAHuman(rootMO) then
 							self.smartGunTarget = ToAHuman(rootMO);
@@ -671,6 +675,26 @@ function Update(self)
 			end
 			
 			self.smartGunSearchTimer:Reset();
+		end
+		
+		-- draw blips on top of targets being scanned
+		
+		for k, v in pairs(self.smartGunPotentialTargetTable) do
+			if k ~= nil then
+				for i = 1, v do
+					local mo = MovableMan:FindObjectByUniqueID(k)
+					if mo then
+						local color = 5
+						local spacing = 4
+						local offset = Vector(0 - spacing * 0.5 + spacing * (i) - spacing * v / 2, 35)
+						local position = mo.AboveHUDPos + offset
+						PrimitiveMan:DrawCirclePrimitive(position + Vector(0,-2), 1, color);
+					else -- this is a faulty entry, nix it
+						k = nil;
+						v = nil;
+					end
+				end
+			end
 		end
 		
 		-- END FROSTBITE SMARTGUN SYSTEM -- 
