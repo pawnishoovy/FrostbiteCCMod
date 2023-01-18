@@ -381,7 +381,6 @@ function Update(self)
 				self.afterSoundPlayed = false;
 				if self.chamberOnReload and self.reloadPhase == 1 then
 					self.reloadPhase = self.reloadPhase + 1;
-					self.reloadPrepareDelay.MagOut = 300
 				elseif self.reloadPhase == 4 then
 					self.ReloadTime = 0;
 					self.reloadPhase = 0;
@@ -419,15 +418,11 @@ function Update(self)
 	
 	local fire = self:IsActivated() and self.RoundInMagCount > 0;
 	
-	if self.RoundInMagCount > 0 and self.delayedFirstShot then
-	
-		self:Deactivate()
-		
+	if self.RoundInMagCount > 0 and self.delayedFirstShot then	
+		self:Deactivate()	
 	end
 
 	if self.parent and self.delayedFirstShot == true then
-	
-		self:Deactivate()
 		
 		--if self.parent:GetController():IsState(Controller.WEAPON_FIRE) and not self:IsReloading() then
 		if fire and not self:IsReloading() then
