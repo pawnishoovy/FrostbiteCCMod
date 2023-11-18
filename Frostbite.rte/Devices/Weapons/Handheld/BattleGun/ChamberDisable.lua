@@ -1,7 +1,7 @@
 function OnDetach(self)
 
 	self:DisableScript("Frostbite.rte/Devices/Weapons/Handheld/BattleGun/Chamber.lua");
-	self.ReloadTime = 9999;
+	self.BaseReloadTime = 9999;
 	self.Frame = self.boltLockedBack and 3 or 0;
 	
 end

@@ -60,6 +60,8 @@ function Create(self)
 	self.originalStanceOffset = Vector(math.abs(self.StanceOffset.X), self.StanceOffset.Y)
 	self.originalSharpStanceOffset = Vector(self.SharpStanceOffset.X, self.SharpStanceOffset.Y)
 	
+	self.originalSupportOffset = Vector(self.SupportOffset.X, self.SupportOffset.Y)
+	
 	self.rotation = 0
 	self.rotationTarget = 0
 	self.rotationSpeed = 9
@@ -79,11 +81,11 @@ function Create(self)
 	self.smokeDelayTimer = Timer();
 	self.canSmoke = false
 	
-	self.reloadTimer = Timer();
+	self.BaseReloadTimer = Timer();
 	
 	self.reloadPhase = 0;
 	
-	self.ReloadTime = 9999;
+	self.BaseReloadTime = 9999;
 	
 	self.fireDelayTimer = Timer();
 	self.delayedFire = false
@@ -267,14 +269,14 @@ function Update(self)
 			
 		end
 		
-		if self.reloadTimer:IsPastSimMS(self.reloadDelay - self.prepareSoundLength) and self.prepareSoundPlayed ~= true then
+		if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay - self.prepareSoundLength) and self.prepareSoundPlayed ~= true then
 			self.prepareSoundPlayed = true;
 			if self.prepareSound then
 				self.prepareSound:Play(self.Pos)
 			end
 		end
 	
-		if self.reloadTimer:IsPastSimMS(self.reloadDelay) then
+		if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay) then
 		
 			if self.reloadPhase == 0 then
 				
@@ -303,7 +305,7 @@ function Update(self)
 				local minTime = self.reloadDelay
 				local maxTime = self.reloadDelay + ((self.afterDelay/5)*2.5)
 				
-				local factor = math.pow(math.min(math.max(self.reloadTimer.ElapsedSimTimeMS - minTime, 0) / (maxTime - minTime), 1), 2)
+				local factor = math.pow(math.min(math.max(self.BaseReloadTimer.ElapsedSimTimeMS - minTime, 0) / (maxTime - minTime), 1), 2)
 				
 			--	PrimitiveMan:DrawLinePrimitive(parent.Pos + Vector(0, -25), parent.Pos + Vector(0, -25) + Vector(0, -25):RadRotate(math.pi * (factor - 0.5)), 122);
 				
@@ -314,20 +316,18 @@ function Update(self)
 				local minTime = self.reloadDelay
 				local maxTime = self.reloadDelay + ((self.afterDelay/5)*2.5)
 				
-				local factor = math.pow(math.min(math.max(self.reloadTimer.ElapsedSimTimeMS - minTime, 0) / (maxTime - minTime), 1), 2)
+				local factor = math.pow(math.min(math.max(self.BaseReloadTimer.ElapsedSimTimeMS - minTime, 0) / (maxTime - minTime), 1), 2)
 				
 			--	PrimitiveMan:DrawLinePrimitive(parent.Pos + Vector(0, -25), parent.Pos + Vector(0, -25) + Vector(0, -25):RadRotate(math.pi * (factor - 0.5)), 122);
 				
 				self.Frame = math.min(10, 6 + math.floor(factor * (5) + 0.5)) % 10
 				
 
-				if self.reloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay/2.5) then
+				if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay/2.5) then
 					self.reloadSupportOffsetTarget = Vector(-8, 5);
 				end
 				
 			end
-			
-			print(self.Frame);
 			
 			if self.afterSoundPlayed ~= true then
 			
@@ -361,7 +361,7 @@ function Update(self)
 					if self.chamberOnReload then
 						self.phaseOnStop = 5;
 					else
-						self.ReloadTime = 0; -- done! no after delay if non-chambering reload.
+						self.BaseReloadTime = 0; -- done! no after delay if non-chambering reload.
 						self.reloadPhase = 0;
 						self.reloadingVectorTarget = nil;
 						self.rotationSpeed = 9
@@ -379,17 +379,18 @@ function Update(self)
 					self.afterSound:Play(self.Pos);
 				end
 			end
-			if self.reloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay) then
-				self.reloadTimer:Reset();
+			if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay) then
+				self.BaseReloadTimer:Reset();
 				self.prepareSoundPlayed = false;
 				self.afterSoundPlayed = false;
 				if self.chamberOnReload and self.reloadPhase == 4 then
 					self.reloadPhase = self.reloadPhase + 1;
 				elseif self.reloadPhase == 6 then
-					self.ReloadTime = 0;
+					self.BaseReloadTime = 0;
 					self.reloadPhase = 0;
 					self.reloadingVectorTarget = nil;
 					self.rotationSpeed = 9
+					self.reloadSupportOffsetTarget = self.originalSupportOffset;
 				else
 					self.reloadPhase = self.reloadPhase + 1;
 				end
@@ -397,7 +398,7 @@ function Update(self)
 		end		
 	else
 		
-		self.reloadTimer:Reset();
+		self.BaseReloadTimer:Reset();
 		self.prepareSoundPlayed = false;
 		self.afterSoundPlayed = false;
 		if self.phaseOnStop then
@@ -407,7 +408,7 @@ function Update(self)
 		if self.reloadPhase == 6 then
 			self.reloadPhase = 5;
 		end
-		self.ReloadTime = 9999;
+		self.BaseReloadTime = 9999;
 	end
 	
 	if self:DoneReloading() == true and self.chamberOnReload then
@@ -571,7 +572,7 @@ function Update(self)
 		-- Progressive Recoil Update		
 		
 		self.rotation = (self.rotation + self.rotationTarget * TimerMan.DeltaTimeSecs * self.rotationSpeed) / (1 + TimerMan.DeltaTimeSecs * self.rotationSpeed)
-		self.ReloadSupportOffset = self.ReloadSupportOffset + ((self.reloadSupportOffsetTarget - self.ReloadSupportOffset) * TimerMan.DeltaTimeSecs * self.reloadSupportOffsetSpeed)
+		self.SupportOffset = self.SupportOffset + ((self.reloadSupportOffsetTarget - self.SupportOffset) * TimerMan.DeltaTimeSecs * self.reloadSupportOffsetSpeed)
 		local total = math.rad(self.rotation) * self.FlipFactor
 		
 		self.InheritedRotAngleOffset = total * self.FlipFactor;

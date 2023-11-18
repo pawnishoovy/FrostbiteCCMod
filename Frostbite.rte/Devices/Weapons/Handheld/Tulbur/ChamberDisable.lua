@@ -1,7 +1,7 @@
 function OnDetach(self)
 
 	self:DisableScript("Frostbite.rte/Devices/Weapons/Handheld/Tulbur/Chamber.lua");
-	self.ReloadTime = 9999;
+	self.BaseReloadTime = 9999;
 	
 end
 

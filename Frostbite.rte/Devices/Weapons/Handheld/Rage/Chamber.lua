@@ -1,3 +1,5 @@
+require("FrostbiteSettings");
+
 function Create(self)
 
 	self.parentSet = false;
@@ -53,6 +55,8 @@ function Create(self)
 	self.originalStanceOffset = Vector(math.abs(self.StanceOffset.X), self.StanceOffset.Y)
 	self.originalSharpStanceOffset = Vector(self.SharpStanceOffset.X, self.SharpStanceOffset.Y)
 	
+	self.originalSupportOffset = Vector(self.SupportOffset.X, self.SupportOffset.Y)
+	
 	self.rotation = 0
 	self.rotationTarget = 0
 	self.rotationSpeed = 6
@@ -74,11 +78,11 @@ function Create(self)
 	self.smokeDelayTimer = Timer();
 	self.canSmoke = false
 	
-	self.reloadTimer = Timer();
+	self.BaseReloadTimer = Timer();
 	
 	self.reloadPhase = 0;
 	
-	self.ReloadTime = 9999;
+	self.BaseReloadTime = 9999;
 	
 	self.fireDelayTimer = Timer();
 	self.delayedFire = false
@@ -226,14 +230,14 @@ function Update(self)
 			
 		end
 		
-		if self.reloadTimer:IsPastSimMS(self.reloadDelay - self.prepareSoundLength) and self.prepareSoundPlayed ~= true then
+		if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay - self.prepareSoundLength) and self.prepareSoundPlayed ~= true then
 			self.prepareSoundPlayed = true;
 			if self.prepareSound then
 				self.prepareSound:Play(self.Pos)
 			end
 		end
 	
-		if self.reloadTimer:IsPastSimMS(self.reloadDelay) then
+		if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay) then
 		
 			if self.reloadPhase == 1 then
 			
@@ -282,8 +286,8 @@ function Update(self)
 					self.afterSound:Play(self.Pos);
 				end
 			end
-			if self.reloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay) then
-				self.reloadTimer:Reset();
+			if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay) then
+				self.BaseReloadTimer:Reset();
 				self.prepareSoundPlayed = false;
 				self.afterSoundPlayed = false;
 				if self.reloadPhase == 0 then
@@ -295,10 +299,11 @@ function Update(self)
 						self.reloadPhase = 3;
 					end
 				elseif self.reloadPhase == 3 then
-					self.ReloadTime = 0;
+					self.BaseReloadTime = 0;
 					self.reloadPhase = 0;
 					self.reloadingVectorTarget = nil;
 					self.rotationSpeed = 9
+					self.reloadSupportOffsetTarget = self.originalSupportOffset;
 				else
 					self.reloadPhase = self.reloadPhase + 1;
 				end
@@ -306,13 +311,13 @@ function Update(self)
 		end		
 	else
 		
-		self.reloadTimer:Reset();
+		self.BaseReloadTimer:Reset();
 		self.prepareSoundPlayed = false;
 		self.afterSoundPlayed = false;
 		if self.reloadPhase == 3 then
 			self.reloadPhase = 2;
 		end
-		self.ReloadTime = 9999;
+		self.BaseReloadTime = 9999;
 	end
 	
 	if self:DoneReloading() then
@@ -631,7 +636,7 @@ function Update(self)
 		-- Progressive Recoil Update		
 		
 		self.rotation = (self.rotation + self.rotationTarget * TimerMan.DeltaTimeSecs * self.rotationSpeed) / (1 + TimerMan.DeltaTimeSecs * self.rotationSpeed)
-		self.ReloadSupportOffset = self.ReloadSupportOffset + ((self.reloadSupportOffsetTarget - self.ReloadSupportOffset) * TimerMan.DeltaTimeSecs * self.reloadSupportOffsetSpeed)
+		self.SupportOffset = self.SupportOffset + ((self.reloadSupportOffsetTarget - self.SupportOffset) * TimerMan.DeltaTimeSecs * self.reloadSupportOffsetSpeed)
 		local total = math.rad(self.rotation) * self.FlipFactor
 		
 		self.InheritedRotAngleOffset = total * self.FlipFactor;

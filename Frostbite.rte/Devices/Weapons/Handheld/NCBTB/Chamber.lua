@@ -47,11 +47,11 @@ function Create(self)
 	self.reloadAfterDelay.RoundIn = 380
 	self.reloadAfterDelay.BoltForward = 350
 	
-	self.reloadTimer = Timer();
+	self.BaseReloadTimer = Timer();
 	
 	self.reloadPhase = 0;
 	
-	self.ReloadTime = 12000;
+	self.BaseReloadTime = 12000;
 
 	self.parentSet = false;
 	
@@ -159,7 +159,7 @@ function Update(self)
 	
 	if self:IsReloading() and (not self.Chamber) then -- if we start reloading from "scratch"
 		self.Chamber = true;
-		self.ReloadTime = 19999;
+		self.BaseReloadTime = 19999;
 		self.Reloading = true;
 		self.reloadCycle = true;
 		self.reloadPhase = 0;
@@ -197,9 +197,9 @@ function Update(self)
 				
 				if self.Reloading == false then
 					self.reloadCycle = true;
-					self.ReloadTime = 19999;
+					self.BaseReloadTime = 19999;
 					self.Reloading = true;
-					-- self.reloadTimer:Reset();
+					-- self.BaseReloadTimer:Reset();
 					-- self.prepareSoundPlayed = false;
 					-- self.afterSoundPlayed = false;
 				end
@@ -239,9 +239,9 @@ function Update(self)
 				self.afterSound = self.reloadAfterSounds.BoltBack;
 				
 				if self:IsReloading() then
-					self.rotationTarget = (30 * self.reloadTimer.ElapsedSimTimeMS / (self.reloadDelay + self.afterDelay))
+					self.rotationTarget = (30 * self.BaseReloadTimer.ElapsedSimTimeMS / (self.reloadDelay + self.afterDelay))
 				else
-					self.rotationTarget = (20 * self.reloadTimer.ElapsedSimTimeMS / (self.reloadDelay + self.afterDelay))
+					self.rotationTarget = (20 * self.BaseReloadTimer.ElapsedSimTimeMS / (self.reloadDelay + self.afterDelay))
 				end
 				
 			elseif self.reloadPhase == 2 then
@@ -287,7 +287,7 @@ function Update(self)
 				self.prepareSoundLength = self.reloadPrepareLengths.RoundIn;
 				self.afterSound = self.reloadAfterSounds.RoundIn;
 				
-				self.rotationTarget = 15 + (5 * self.reloadTimer.ElapsedSimTimeMS / (self.reloadDelay + self.afterDelay))
+				self.rotationTarget = 15 + (5 * self.BaseReloadTimer.ElapsedSimTimeMS / (self.reloadDelay + self.afterDelay))
 				
 			elseif self.reloadPhase == 5 then
 			
@@ -311,7 +311,7 @@ function Update(self)
 				end
 			end
 			
-			if self.reloadTimer:IsPastSimMS(self.reloadDelay) then
+			if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay) then
 				--[[
 				if self.reloadPhase == 0 and self.Casing then
 					local shell
@@ -344,11 +344,11 @@ function Update(self)
 				
 					self.BoltBacked = true;
 					
-					if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.5)) then
+					if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.5)) then
 						self.Frame = 3;
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1)) then
 						self.Frame = 2;
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.5)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.5)) then
 						self.Frame = 1;
 						self.reloadSupportOffsetTarget = Vector(-1, 2)
 					end
@@ -380,16 +380,16 @@ function Update(self)
 				
 					self.BoltBacked = false;
 					
-					if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.0)) then
+					if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.0)) then
 						self.Frame = 0;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.5)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.5)) then
 						self.Frame = 7;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.0)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.0)) then
 						self.Frame = 6;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.5)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.5)) then
 						self.Frame = 5;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
 					else
@@ -400,7 +400,7 @@ function Update(self)
 					
 					self.phaseOnStop = 3;
 					
-					if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.0)) then
+					if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2.0)) then
 						self.reloadSupportOffsetTarget = Vector(-3, 2)
 					end
 				
@@ -425,24 +425,24 @@ function Update(self)
 				
 					self.BoltBacked = false;
 					
-					if self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2)) then
+					if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*2)) then
 						self.Frame = 0;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.5)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1.5)) then
 						self.Frame = 1;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*1)) then
 						self.Frame = 2;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
-					elseif self.reloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.5)) then
+					elseif self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + ((self.afterDelay/5)*0.5)) then
 						self.Frame = 3;
 						self.reloadSupportOffsetTarget = Vector(2, 2)
 					end
 
 				end
 				
-				if self.reloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay) then
-					self.reloadTimer:Reset();
+				if self.BaseReloadTimer:IsPastSimMS(self.reloadDelay + self.afterDelay) then
+					self.BaseReloadTimer:Reset();
 					self.prepareSoundPlayed = false;
 					self.afterSoundPlayed = false;
 					
@@ -493,7 +493,7 @@ function Update(self)
 						if self.reloadCycle then
 							self.reloadPhase = 4; -- same phase baby the ride never ends (except at 4 rounds)
 						else
-							self.ReloadTime = 0;
+							self.BaseReloadTime = 0;
 							self.reloadPhase = 0;
 							self.Chamber = false;
 							self.Reloading = false;
@@ -507,7 +507,7 @@ function Update(self)
 						if self.reloadCycle then
 							self.reloadPhase = 4; -- same phase baby the ride never ends (except at 4 rounds)
 						else
-							self.ReloadTime = 0;
+							self.BaseReloadTime = 0;
 							self.reloadPhase = 0;
 							self.Chamber = false;
 							self.Reloading = false;
@@ -522,18 +522,20 @@ function Update(self)
 							if self.ammoCount < 7 then
 								self.reloadPhase = 4;
 							else
-								self.ReloadTime = 0;
+								self.BaseReloadTime = 0;
 								self.reloadPhase = 0;
 								self.Chamber = false;
 								self.Reloading = false;
 								self.phaseOnStop = nil;
+								self.reloadSupportOffsetTarget = self.originalSupportOffset;
 							end
 						else
-							self.ReloadTime = 0;
+							self.BaseReloadTime = 0;
 							self.reloadPhase = 0;
 							self.Chamber = false;
 							self.Reloading = false;
 							self.phaseOnStop = nil;
+							self.reloadSupportOffsetTarget = self.originalSupportOffset;
 						end
 						
 					else
@@ -549,14 +551,14 @@ function Update(self)
 			local f = math.max(1 - math.min((self.FireTimer.ElapsedSimTimeMS - 25) / 200, 1), 0)
 			self.JointOffset = self.originalJointOffset + Vector(1, 0) * f
 			
-			self.reloadTimer:Reset();
+			self.BaseReloadTimer:Reset();
 			self.prepareSoundPlayed = false;
 			self.afterSoundPlayed = false;
-			self.ReloadTime = 19999;
+			self.BaseReloadTime = 19999;
 		end		
 	
 	else
-		self.reloadTimer:Reset();
+		self.BaseReloadTimer:Reset();
 	end
 	
 	if self:DoneReloading() then
@@ -577,7 +579,7 @@ function Update(self)
 		
 		self.heatNum = math.min(100, self.heatNum + 20)
 		
-		self.reloadTimer:Reset();
+		self.BaseReloadTimer:Reset();
 		self.reChamber = true;
 		self.Casing = true;
 		self.reloadPhase = 1;
@@ -808,7 +810,7 @@ function Update(self)
 		self.SupportOffset = self.originalSupportOffset + supportOffset
 		
 		self.rotation = (self.rotation + self.rotationTarget * TimerMan.DeltaTimeSecs * self.rotationSpeed) / (1 + TimerMan.DeltaTimeSecs * self.rotationSpeed)
-		self.ReloadSupportOffset = self.ReloadSupportOffset + ((self.reloadSupportOffsetTarget - self.ReloadSupportOffset) * TimerMan.DeltaTimeSecs * self.reloadSupportOffsetSpeed)
+		self.SupportOffset = self.SupportOffset + ((self.reloadSupportOffsetTarget - self.SupportOffset) * TimerMan.DeltaTimeSecs * self.reloadSupportOffsetSpeed)
 		local total = math.rad(self.rotation) * self.FlipFactor
 		
 		self.InheritedRotAngleOffset = total * self.FlipFactor;

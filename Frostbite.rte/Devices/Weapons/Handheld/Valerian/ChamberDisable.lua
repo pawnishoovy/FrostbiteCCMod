@@ -1,7 +1,7 @@
 function OnDetach(self)
 
 	self:DisableScript("Frostbite.rte/Devices/Weapons/Handheld/Valerian/Chamber.lua");
-	self.ReloadTime = 5000;
+	self.BaseReloadTime = 5000;
 	self.Frame = 0;
 	
 end
